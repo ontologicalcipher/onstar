@@ -1,6 +1,4 @@
-
-
-
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -56,12 +54,12 @@ button:active{transform:scale(.98)}
 }
 
 html, body {
-  background: #CBD8E8;
+  background: #f4f7fc;
   color: #17233b;
 }
 
 header {
-  background: linear-gradient(#CBD8E8 35%, transparent);
+  background: linear-gradient(#f4f7fc 35%, transparent);
 }
 
 .panel {
@@ -132,192 +130,10 @@ button:hover {
   border-color: #d5dfed !important;
 }
 
-
-/* Animated ONSTAR cosmic backdrop */
-#space {
-  background:
-    radial-gradient(ellipse at 20% 30%, rgba(86,145,220,.24), transparent 42%),
-    radial-gradient(ellipse at 80% 65%, rgba(143,113,220,.18), transparent 40%),
-    radial-gradient(ellipse at 55% 10%, rgba(73,190,210,.16), transparent 38%),
-    linear-gradient(135deg, #cbd8e8, #edf2fa, #d8e3f2, #e8e5f5);
-  background-size: 180% 180%;
-  animation: cosmicDrift 32s ease-in-out infinite alternate;
-}
-
-#space canvas {
-  background: transparent;
-}
-
-@keyframes cosmicDrift {
-  0%   { background-position: 0% 20%; }
-  50%  { background-position: 100% 80%; }
-  100% { background-position: 20% 100%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #space { animation: none; }
-}
-
-
-/* ONSTAR CELESTIAL OBSERVATORY THEME */
-:root {
-  --panel: rgba(255,255,255,.91);
-  --line: rgba(111,143,190,.35);
-  --muted: #526783;
-  --cyan: #087fa8;
-}
-
-#space {
-  background:
-    radial-gradient(ellipse at 18% 25%,
-      rgba(88,143,210,.42), transparent 38%),
-    radial-gradient(ellipse at 82% 38%,
-      rgba(155,126,207,.34), transparent 36%),
-    radial-gradient(ellipse at 52% 82%,
-      rgba(69,177,190,.25), transparent 40%),
-    linear-gradient(140deg,#b9cce5,#e1e8f5 48%,#d0d8ee);
-  background-size: 170% 170%;
-  animation: observatoryNebula 26s ease-in-out infinite alternate;
-}
-
-@keyframes observatoryNebula {
-  0% { background-position: 0% 20%; }
-  50% { background-position: 100% 60%; }
-  100% { background-position: 20% 100%; }
-}
-
-.panel {
-  background: rgba(255,255,255,.88);
-  border: 1px solid rgba(255,255,255,.95);
-  box-shadow:
-    0 12px 36px rgba(48,69,111,.13),
-    inset 0 1px rgba(255,255,255,.95);
-  backdrop-filter: blur(18px);
-}
-
-.brand {
-  color: #192b49;
-  text-shadow: 0 1px 0 white;
-}
-
-.brand span {
-  color: #087fa8;
-}
-
-.status, .counter {
-  color: #526783;
-}
-
-.filters button.active {
-  background: #d5edf7;
-  border-color: #62b6d4;
-  color: #075985;
-}
-
-.pill {
-  color: #087fa8;
-}
-
-.bottom {
-  background: rgba(255,255,255,.88);
-  border-color: rgba(130,153,192,.4);
-  box-shadow: 0 8px 28px rgba(48,69,111,.14);
-}
-
-#liveData {
-  color: #526783 !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #space { animation: none; }
-}
-\n
-/* ONSTAR CELESTIAL ORBS */
-.cosmic-orb {
-  position: fixed;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 50%;
-  opacity: .78;
-  transform-style: preserve-3d;
-  animation: orbFloat 18s ease-in-out infinite alternate;
-}
-
-.cosmic-orb::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.75);
-  box-shadow:
-    inset -18px -12px 35px rgba(35,60,120,.20),
-    inset 10px 8px 28px rgba(255,255,255,.35),
-    0 0 28px rgba(75,145,220,.12);
-}
-
-.orb-earth {
-  width: min(43vw, 330px);
-  aspect-ratio: 1;
-  top: 22%;
-  right: -8%;
-  background:
-    radial-gradient(ellipse at 35% 30%, rgba(255,255,255,.9), transparent 12%),
-    radial-gradient(ellipse at 65% 58%, #4d91c5 0%, #366eaa 38%, #253d77 72%, transparent 74%);
-  box-shadow: inset -22px -12px 36px rgba(14,28,65,.35);
-}
-
-.orb-sun {
-  width: min(25vw, 190px);
-  aspect-ratio: 1;
-  top: 48%;
-  left: -9%;
-  animation-delay: -6s;
-  background:
-    radial-gradient(circle at 35% 30%, #fff9d9 0%, #ffe7a1 16%, #f8b957 48%, #ed9551 68%, transparent 72%);
-  box-shadow: 0 0 55px rgba(245,174,81,.22);
-}
-
-.orb-moon {
-  width: min(19vw, 145px);
-  aspect-ratio: 1;
-  top: 68%;
-  right: 12%;
-  animation-delay: -11s;
-  background:
-    radial-gradient(circle at 32% 27%, #ffffff 0%, #e8edf5 35%, #bdc9da 67%, transparent 72%);
-  box-shadow: inset -12px -10px 22px rgba(60,76,105,.22);
-}
-
-@keyframes orbFloat {
-  from { transform: translate3d(0,-12px,0) rotate(-5deg); }
-  to   { transform: translate3d(-12px,15px,0) rotate(5deg); }
-}
-
-#space canvas {
-  position: relative;
-  z-index: 1;
-}
-
-@media (max-width: 600px) {
-  .orb-earth { width: 48vw; right: -18%; top: 28%; }
-  .orb-sun { width: 28vw; left: -12%; top: 53%; }
-  .orb-moon { width: 22vw; right: 5%; top: 72%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cosmic-orb { animation: none; }
-}
-
 </style>
 </head>
 <body>
 <div id="space" aria-label="Interactive 3D star field"></div>
-
-<!-- ONSTAR CELESTIAL ORBS -->
-
-
-
-
 <header><div class="brand">ON<span>STAR</span></div><div class="status" id="status"><i class="loading"></i>LOADING LOCAL CATALOGUE</div></header>
 <section class="panel search-panel">
   <div class="search-row"><input id="search" autocomplete="off" placeholder="Search Sirius, Gaia DR3, HIP…" aria-label="Search astronomical objects"><button id="clearSearch" title="Clear search">×</button></div>
@@ -341,167 +157,16 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
-scene.background = null;
-scene.fog = null;
+scene.background = new THREE.Color(0xf4f7fc);
+scene.fog = new THREE.FogExp2(0x030611, 0.00045);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
 camera.position.set(0,0,55);
-const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 $("space").appendChild(renderer.domElement);
 const world = new THREE.Group(); scene.add(world);
-
-
-// ONSTAR INTERACTIVE 3D SOLAR SYSTEM
-const solarSystem = new THREE.Group();
-scene.add(solarSystem);
-
-// Lighting for the planets
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
-scene.add(ambientLight);
-
-const sunLight = new THREE.PointLight(0xffffff, 180, 180);
-solarSystem.add(sunLight);
-
-// Procedural planetary surface textures; no external image dependency
-function makePlanetTexture(base, accent, seed) {
-  const c = document.createElement("canvas");
-  c.width = 512;
-  c.height = 256;
-  const ctx = c.getContext("2d");
-
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, c.width, c.height);
-
-  let n = seed;
-  const random = () => {
-    n = (n * 16807) % 2147483647;
-    return (n - 1) / 2147483646;
-  };
-
-  for (let i = 0; i < 100; i++) {
-    ctx.globalAlpha = 0.08 + random() * 0.22;
-    ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.ellipse(
-      random() * 512, random() * 256,
-      8 + random() * 75, 2 + random() * 18,
-      random() * Math.PI, 0, Math.PI * 2
-    );
-    ctx.fill();
-  }
-
-  ctx.globalAlpha = 1;
-  const texture = new THREE.CanvasTexture(c);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-function createPlanet(name, radius, orbitRadius, color, accent, speed, seed) {
-  const orbit = new THREE.Group();
-  solarSystem.add(orbit);
-
-  const texture = makePlanetTexture(color, accent, seed);
-  const material = new THREE.MeshStandardMaterial({
-    map: texture,
-    roughness: 0.88,
-    metalness: 0.02
-  });
-
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 40, 28),
-    material
-  );
-
-  mesh.position.x = orbitRadius;
-  mesh.rotation.z = 0.08;
-  orbit.add(mesh);
-
-  // Elliptical orbital path
-  const curve = new THREE.EllipseCurve(
-    0, 0, orbitRadius, orbitRadius * 0.72,
-    0, Math.PI * 2, false, 0
-  );
-
-  const points = curve.getPoints(180).map(
-    p => new THREE.Vector3(p.x, p.y, 0)
-  );
-
-  const pathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-  const pathMaterial = new THREE.LineBasicMaterial({
-    color: 0x6585ac,
-    transparent: true,
-    opacity: 0.5
-  });
-
-  solarSystem.add(new THREE.LineLoop(pathGeometry, pathMaterial));
-
-  const item = { name, orbit, mesh, speed };
-  planets.push(item);
-
-  // Saturn's rings
-  if (name === "Saturn") {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(radius * 1.35, radius * 2.15, 96),
-      new THREE.MeshBasicMaterial({
-        color: 0xd9bd8b,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8
-      })
-    );
-    ring.rotation.x = -0.32;
-    mesh.add(ring);
-  }
-
-  return item;
-}
-
-const planets = [];
-
-// Glowing Sun
-const sun = new THREE.Mesh(
-  new THREE.SphereGeometry(2.6, 48, 32),
-  new THREE.MeshBasicMaterial({ color: 0xffbd43 })
-);
-solarSystem.add(sun);
-
-const sunGlow = new THREE.Sprite(
-  new THREE.SpriteMaterial({
-    map: starTexture,
-    color: 0xffad32,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  })
-);
-sunGlow.scale.set(15, 15, 1);
-solarSystem.add(sunGlow);
-
-// Planet order: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
-createPlanet("Mercury", 0.32, 4.1, "#88827b", "#d7d0c5", 0.018, 2);
-createPlanet("Venus",   0.52, 6.0, "#d6a86d", "#f7dfae", 0.013, 3);
-createPlanet("Earth",   0.57, 8.0, "#1769b0", "#52bd83", 0.010, 4);
-createPlanet("Mars",    0.43, 10.2, "#b85d40", "#edaa78", 0.008, 5);
-createPlanet("Jupiter", 1.35, 13.3, "#c79b73", "#f0d9b3", 0.005, 6);
-createPlanet("Saturn",  1.10, 16.3, "#d6bd8b", "#f3e4bf", 0.004, 7);
-createPlanet("Uranus",  0.80, 19.1, "#77c9d1", "#c1f0ef", 0.003, 8);
-createPlanet("Neptune", 0.78, 21.7, "#3769db", "#8ca9ff", 0.002, 9);
-
-// A slight tilt gives the system depth
-solarSystem.rotation.x = -0.22;
-solarSystem.rotation.z = 0.08;
-
-function updateSolarSystem() {
-  for (const planet of planets) {
-    planet.orbit.rotation.z += planet.speed;
-    planet.mesh.rotation.y += 0.012;
-  }
-  sun.rotation.y += 0.0015;
-}
-
-
 const stars = [];
 const byId = new Map();
 let layer = "all", selected = null, isDragging=false, lastX=0,lastY=0, velocityX=0,velocityY=0, pinchStart=0, pinchZoom=55;
@@ -510,36 +175,12 @@ const raycaster = new THREE.Raycaster(); raycaster.params.Points.threshold=1.4;
 const pointer = new THREE.Vector2();
 const pointMeshes = [];
 const starTexture = (() => {
-  const c = document.createElement("canvas");
-  c.width = c.height = 64;
-  const ctx = c.getContext("2d");
-
-  // Soft outer glow
-  const glow = ctx.createRadialGradient(32,32,1,32,32,31);
-  glow.addColorStop(0,"rgba(255,255,255,.95)");
-  glow.addColorStop(.18,"rgba(130,190,255,.75)");
-  glow.addColorStop(.48,"rgba(65,125,220,.28)");
-  glow.addColorStop(1,"rgba(40,100,255,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0,0,64,64);
-
-  // Four-point astronomical sparkle
-  ctx.save();
-  ctx.translate(32,32);
-  ctx.beginPath();
-  ctx.moveTo(0,-25);
-  ctx.quadraticCurveTo(3,-4,25,0);
-  ctx.quadraticCurveTo(3,4,0,25);
-  ctx.quadraticCurveTo(-3,4,-25,0);
-  ctx.quadraticCurveTo(-3,-4,0,-25);
-  ctx.closePath();
-  ctx.fillStyle = "rgba(255,255,255,1)";
-  ctx.shadowColor = "#4b91e8";
-  ctx.shadowBlur = 5;
-  ctx.fill();
-  ctx.restore();
-
-  return new THREE.CanvasTexture(c);
+  const c=document.createElement("canvas"); c.width=c.height=64;
+  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,31);
+  g.addColorStop(0,"rgba(255,255,255,1)"); g.addColorStop(.16,"rgba(190,235,255,.95)");
+  g.addColorStop(.42,"rgba(100,190,255,.32)"); g.addColorStop(1,"rgba(40,100,255,0)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
+  const t=new THREE.CanvasTexture(c); return t;
 })();
 function notify(msg){const el=$("toast");el.textContent=msg;el.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.style.display="none",3200);}
 function colorFor(s){
@@ -586,7 +227,7 @@ function rebuildPoints(){
   geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
   geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
   geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
-  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:10,sizeAttenuation:false,transparent:true,alphaTest:.008,depthWrite:false});
+  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:7,sizeAttenuation:false,transparent:true,alphaTest:.015,depthWrite:false});
   const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
 }
 function showInfo(s){
@@ -729,7 +370,6 @@ window.addEventListener("beforeunload",()=>clearInterval(liveRefreshTimer));
 async function animate(){
   requestAnimationFrame(animate);
   if(!isDragging){world.rotation.y+=velocityX;world.rotation.x=Math.max(-1.5,Math.min(1.5,world.rotation.x+velocityY));velocityX*=.94;velocityY*=.94;}
-  updateSolarSystem();
   camera.position.lerp(targetCamera,.09);
   renderer.render(scene,camera);
 }

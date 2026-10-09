@@ -130,7 +130,14 @@ button:hover {
   border-color: #d5dfed !important;
 }
 
-</style>
+
+/* ONSTAR nebula wallpaper */
+#space {
+  background: linear-gradient(rgba(3,12,34,.12), rgba(3,12,34,.18)),
+              url('/static/space-bg.png') center center / cover no-repeat;
+}
+#space canvas { background: transparent; }
+\n</style>
 </head>
 <body>
 <div id="space" aria-label="Interactive 3D star field"></div>
@@ -157,11 +164,11 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf4f7fc);
+scene.background = null;
 scene.fog = new THREE.FogExp2(0x030611, 0.00045);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
 camera.position.set(0,0,55);
-const renderer = new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -227,7 +234,7 @@ function rebuildPoints(){
   geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
   geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
   geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
-  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:7,sizeAttenuation:false,transparent:true,alphaTest:.015,depthWrite:false});
+  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:11,sizeAttenuation:false,transparent:true,opacity:1,alphaTest:.003,depthWrite:false,blending:THREE.AdditiveBlending});
   const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
 }
 function showInfo(s){

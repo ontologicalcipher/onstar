@@ -229,10 +229,93 @@ button:hover {
 @media (prefers-reduced-motion: reduce) {
   #space { animation: none; }
 }
-\n</style>
+\n
+/* ONSTAR CELESTIAL ORBS */
+.cosmic-orb {
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: .78;
+  transform-style: preserve-3d;
+  animation: orbFloat 18s ease-in-out infinite alternate;
+}
+
+.cosmic-orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow:
+    inset -18px -12px 35px rgba(35,60,120,.20),
+    inset 10px 8px 28px rgba(255,255,255,.35),
+    0 0 28px rgba(75,145,220,.12);
+}
+
+.orb-earth {
+  width: min(43vw, 330px);
+  aspect-ratio: 1;
+  top: 22%;
+  right: -8%;
+  background:
+    radial-gradient(ellipse at 35% 30%, rgba(255,255,255,.9), transparent 12%),
+    radial-gradient(ellipse at 65% 58%, #4d91c5 0%, #366eaa 38%, #253d77 72%, transparent 74%);
+  box-shadow: inset -22px -12px 36px rgba(14,28,65,.35);
+}
+
+.orb-sun {
+  width: min(25vw, 190px);
+  aspect-ratio: 1;
+  top: 48%;
+  left: -9%;
+  animation-delay: -6s;
+  background:
+    radial-gradient(circle at 35% 30%, #fff9d9 0%, #ffe7a1 16%, #f8b957 48%, #ed9551 68%, transparent 72%);
+  box-shadow: 0 0 55px rgba(245,174,81,.22);
+}
+
+.orb-moon {
+  width: min(19vw, 145px);
+  aspect-ratio: 1;
+  top: 68%;
+  right: 12%;
+  animation-delay: -11s;
+  background:
+    radial-gradient(circle at 32% 27%, #ffffff 0%, #e8edf5 35%, #bdc9da 67%, transparent 72%);
+  box-shadow: inset -12px -10px 22px rgba(60,76,105,.22);
+}
+
+@keyframes orbFloat {
+  from { transform: translate3d(0,-12px,0) rotate(-5deg); }
+  to   { transform: translate3d(-12px,15px,0) rotate(5deg); }
+}
+
+#space canvas {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 600px) {
+  .orb-earth { width: 48vw; right: -18%; top: 28%; }
+  .orb-sun { width: 28vw; left: -12%; top: 53%; }
+  .orb-moon { width: 22vw; right: 5%; top: 72%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-orb { animation: none; }
+}
+
+</style>
 </head>
 <body>
 <div id="space" aria-label="Interactive 3D star field"></div>
+
+<!-- ONSTAR CELESTIAL ORBS -->
+<div class="cosmic-orb orb-earth" aria-hidden="true"></div>
+<div class="cosmic-orb orb-sun" aria-hidden="true"></div>
+<div class="cosmic-orb orb-moon" aria-hidden="true"></div>
+
 <header><div class="brand">ON<span>STAR</span></div><div class="status" id="status"><i class="loading"></i>LOADING LOCAL CATALOGUE</div></header>
 <section class="panel search-panel">
   <div class="search-row"><input id="search" autocomplete="off" placeholder="Search Sirius, Gaia DR3, HIP…" aria-label="Search astronomical objects"><button id="clearSearch" title="Clear search">×</button></div>

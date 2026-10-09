@@ -1,4 +1,4 @@
-# ONSTAR 0.2
+# ONSTAR 
 
 Flask + SQLite + Three.js astronomy explorer for Termux.
 

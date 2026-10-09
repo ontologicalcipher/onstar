@@ -227,19 +227,82 @@ function addStars(records, kind){
   return count;
 }
 function rebuildPoints(){
-  for(const mesh of pointMeshes){world.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}
+  for(const mesh of pointMeshes){
+    world.remove(mesh);
+    mesh.geometry.dispose();
+    if(mesh.material) mesh.material.dispose();
+  }
   pointMeshes.length=0;
-  const visible=stars.filter(s=>layer==="all"||(layer==="local"&&s.kind==="local")||(layer==="gaia"&&s.kind==="gaia")||(layer==="exo"&&s.kind==="exo"));
-  // Batches use circular radial sprites; real catalogue points remain individually selectable by raycasting.
-  const positions=[],colors=[],sizes=[],refs=[];
-  for(const s of visible){positions.push(s.position.x,s.position.y,s.position.z);const c=colorFor(s);colors.push(c.r,c.g,c.b);sizes.push(s.kind==="local"?9:6);refs.push(s);}
-  if(!positions.length)return;
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
-  geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
-  geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
-  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:30,sizeAttenuation:false,transparent:true,opacity:1,alphaTest:.001,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending,toneMapped:false});
-  const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
+
+  const visible=stars.filter(s=>
+    layer==="all" ||
+    (layer==="local"&&s.kind==="local") ||
+    (layer==="gaia"&&s.kind==="gaia") ||
+    (layer==="exo"&&s.kind==="exo")
+  );
+  if(!visible.length)return;
+
+  // Actual 3D spheres, not flat point sprites.
+  const sphereGeometry=new THREE.SphereGeometry(0.42,20,16);
+  const sphereMaterial=new THREE.MeshBasicMaterial({
+    color:0xffffff,
+    vertexColors:true,
+    toneMapped:false
+  });
+  const spheres=new THREE.InstancedMesh(
+    sphereGeometry,sphereMaterial,visible.length
+  );
+  const dummy=new THREE.Object3D();
+  const colors=[];
+  const refs=[];
+
+  visible.forEach((s,i)=>{
+    // Large visible spheres, with a small brightness variation by star type.
+    const radius=s.kind==="local"?1.05:(s.kind==="exo"?0.8:0.72);
+    dummy.position.copy(s.position);
+    dummy.scale.setScalar(radius);
+    dummy.updateMatrix();
+    spheres.setMatrixAt(i,dummy.matrix);
+
+    const c=colorFor(s).clone();
+    c.multiplyScalar(1.7);
+    spheres.setColorAt(i,c);
+    colors.push(c);
+    refs.push(s);
+  });
+
+  spheres.instanceMatrix.needsUpdate=true;
+  if(spheres.instanceColor)spheres.instanceColor.needsUpdate=true;
+  spheres.userData.refs=refs;
+  world.add(spheres);
+  pointMeshes.push(spheres);
+
+  // Soft blue-white glow surrounding each 3D sphere.
+  const glowGeometry=new THREE.SphereGeometry(1,12,10);
+  const glowMaterial=new THREE.MeshBasicMaterial({
+    color:0x68caff,
+    transparent:true,
+    opacity:0.22,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    toneMapped:false
+  });
+  const glow=new THREE.InstancedMesh(
+    glowGeometry,glowMaterial,visible.length
+  );
+
+  visible.forEach((s,i)=>{
+    const radius=s.kind==="local"?2.0:1.5;
+    dummy.position.copy(s.position);
+    dummy.scale.setScalar(radius);
+    dummy.updateMatrix();
+    glow.setMatrixAt(i,dummy.matrix);
+  });
+
+  glow.instanceMatrix.needsUpdate=true;
+  glow.userData.refs=refs;
+  world.add(glow);
+  pointMeshes.push(glow);
 }
 function showInfo(s){
   selected=s;$("info").style.display="block";$("objName").textContent=s.name||s.id;$("objSub").textContent=s.catalog_id?`${s.source||"Catalogue"} · ${s.catalog_id}`:(s.source||"Astronomical object");

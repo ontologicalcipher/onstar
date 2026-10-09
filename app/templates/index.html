@@ -133,7 +133,7 @@ button:hover {
 
 /* ONSTAR nebula wallpaper */
 #space {
-  background: linear-gradient(to bottom, rgba(3,8,24,.78) 0%, rgba(3,8,24,.30) 150px, rgba(3,8,24,.05) 320px, transparent 480px),
+  background: linear-gradient(rgba(2, 8, 25, .38), rgba(2, 8, 25, .38)),
               url('/static/space-bg.png') center center / cover no-repeat;
 }
 #space canvas { background: transparent; }
@@ -183,10 +183,13 @@ const pointer = new THREE.Vector2();
 const pointMeshes = [];
 const starTexture = (() => {
   const c=document.createElement("canvas"); c.width=c.height=64;
-  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,31);
-  g.addColorStop(0,"rgba(255,255,255,1)"); g.addColorStop(.16,"rgba(255,255,255,1)");
-  g.addColorStop(.42,"rgba(150,220,255,.85)"); g.addColorStop(.78,"rgba(70,150,255,.18)")
-  g.addColorStop(1,"rgba(40,100,255,0)");
+  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,"rgba(255,255,255,1)");
+  g.addColorStop(.08,"rgba(255,255,255,1)");
+  g.addColorStop(.22,"rgba(180,235,255,1)");
+  g.addColorStop(.48,"rgba(70,180,255,.8)");
+  g.addColorStop(.75,"rgba(40,120,255,.3)");
+  g.addColorStop(1,"rgba(20,80,255,0)");
   ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
   const t=new THREE.CanvasTexture(c); return t;
 })();
@@ -235,7 +238,7 @@ function rebuildPoints(){
   geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
   geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
   geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
-  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:23,sizeAttenuation:false,transparent:true,opacity:1,alphaTest:.001,depthWrite:false,blending:THREE.AdditiveBlending});
+  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:30,sizeAttenuation:false,transparent:true,opacity:1,alphaTest:.001,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending,toneMapped:false});
   const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
 }
 function showInfo(s){

@@ -169,7 +169,7 @@ scene.fog = new THREE.FogExp2(0x030611, 0.00045);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
 camera.position.set(0,0,55);
 const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 $("space").appendChild(renderer.domElement);
@@ -243,7 +243,7 @@ function rebuildPoints(){
   if(!visible.length)return;
 
   // Actual 3D spheres, not flat point sprites.
-  const sphereGeometry=new THREE.SphereGeometry(0.42,20,16);
+  const sphereGeometry=new THREE.SphereGeometry(0.42,48,32);
   const sphereMaterial=new THREE.MeshBasicMaterial({
     color:0xffffff,
     vertexColors:true,
@@ -278,11 +278,11 @@ function rebuildPoints(){
   pointMeshes.push(spheres);
 
   // Soft blue-white glow surrounding each 3D sphere.
-  const glowGeometry=new THREE.SphereGeometry(1,12,10);
+  const glowGeometry=new THREE.SphereGeometry(1,24,16);
   const glowMaterial=new THREE.MeshBasicMaterial({
     color:0x68caff,
     transparent:true,
-    opacity:0.22,
+    opacity:0.10,
     depthWrite:false,
     blending:THREE.AdditiveBlending,
     toneMapped:false
@@ -447,7 +447,7 @@ async function animate(){
   camera.position.lerp(targetCamera,.09);
   renderer.render(scene,camera);
 }
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setSize(innerWidth,innerHeight);});
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));renderer.setSize(innerWidth,innerHeight);});
 await loadLocal();animate();
 // Do not call external services automatically; user can load catalogue layers on demand.
 </script>

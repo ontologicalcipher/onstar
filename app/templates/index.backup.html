@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ONSTAR</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#010208;color:white;font-family:system-ui,sans-serif}
+#space{position:fixed;inset:0}
+header{position:fixed;z-index:5;top:0;left:0;right:0;padding:20px 24px;display:flex;justify-content:space-between;pointer-events:none}
+.logo{font-size:20px;font-weight:800;letter-spacing:8px}
+.status{font-size:10px;letter-spacing:2px;opacity:.55}
+.search{position:fixed;z-index:5;top:76px;left:22px;width:280px}
+input{width:100%;padding:13px 15px;background:rgba(5,8,18,.82);border:1px solid #273044;border-radius:8px;color:white;outline:none;backdrop-filter:blur(15px)}
+.results{margin-top:8px;max-height:55vh;overflow:auto}
+.result{padding:12px;background:rgba(5,8,18,.88);border-bottom:1px solid #202638;cursor:pointer}
+.result:hover{background:#101629}
+.result b{display:block}.result small{opacity:.5}
+.info{display:none;position:fixed;z-index:5;right:22px;top:76px;width:270px;padding:20px;background:rgba(5,8,18,.84);border:1px solid #273044;border-radius:10px;backdrop-filter:blur(15px)}
+.info h2{margin:0 0 4px;font-size:24px}.info p{font-size:12px;opacity:.65}.info strong{opacity:1;color:white}
+.help{position:fixed;z-index:5;bottom:20px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;opacity:.35}
+</style>
+</head>
+<body>
+
+<div id="space"></div>
+
+<header>
+<div class="logo">ONSTAR</div>
+<div class="status">REAL STAR DATABASE // v0.1</div>
+</header>
+
+<div class="search">
+<input id="search" placeholder="Search Sirius, Vega, HIP...">
+<div id="results" class="results"></div>
+</div>
+
+<div id="info" class="info"></div>
+
+<div class="help">DRAG TO EXPLORE · SCROLL TO FLY · TAP A STAR</div>
+
+
+<script>
+(function () {
+  const box = document.createElement('pre');
+  box.id = 'onstar-debug';
+  box.style.cssText =
+    'position:fixed;z-index:9999;bottom:55px;left:12px;right:12px;' +
+    'max-height:40vh;overflow:auto;white-space:pre-wrap;' +
+    'background:#251018;color:#ffb9c8;padding:12px;' +
+    'font:12px monospace;border:1px solid #ff496c;border-radius:8px;';
+  function report(message) {
+    box.textContent = 'ONSTAR DEBUG\\n' + String(message);
+    if (!box.isConnected) document.body.appendChild(box);
+  }
+  window.addEventListener('error', e =>
+    report(e.message + '\\n' + (e.filename || '') + ':' + e.lineno)
+  );
+  window.addEventListener('unhandledrejection', e =>
+    report(e.reason?.stack || e.reason || 'Unknown promise error')
+  );
+  window.setTimeout(() => {
+    if (!window.__ONSTAR_RENDERED__)
+      report('3D scene did not finish initializing. Check CDN, JavaScript, or WebGL.');
+  }, 5000);
+})();
+</script>
+
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+const payload = await fetch("/api/stars").then(r => {
+  if (!r.ok) throw new Error(`Star API failed: ${r.status}`);
+  return r.json();
+});
+const stars = (Array.isArray(payload) ? payload : payload.items || []).map(s => ({
+  ...s,
+  name: s.name ?? s.proper_name ?? s.catalog_id ?? "Unknown star",
+  catalog: s.catalog ?? s.catalog_id ?? "",
+  distance: Number(s.distance ?? s.distance_ly ?? 0),
+  magnitude: Number(s.magnitude ?? s.apparent_mag ?? 0),
+  ra: Number(s.ra ?? 0),
+  dec: Number(s.dec ?? 0)
+}));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x010208);
+
+const camera = new THREE.PerspectiveCamera(
+55,innerWidth/innerHeight,.01,10000
+);
+camera.position.z=45;
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+document.getElementById("space").appendChild(renderer.domElement);
+
+const group=new THREE.Group();
+scene.add(group);
+
+const positions=[];
+const colors=[];
+const objects=[];
+
+function starColor(m){
+if(m<0)return [1,.72,.48];
+if(m<.5)return [.65,.8,1];
+if(m<1.2)return [1,.95,.75];
+return [1,.55,.32];
+}
+
+for(const s of stars){
+const ra=s.ra*Math.PI/180;
+const dec=s.dec*Math.PI/180;
+const d=Math.max(2,Math.min(s.distance/10,350));
+
+const x=d*Math.cos(dec)*Math.cos(ra);
+const y=d*Math.sin(dec);
+const z=-d*Math.cos(dec)*Math.sin(ra);
+
+positions.push(x,y,z);
+
+const c=starColor(s.magnitude);
+colors.push(...c);
+
+objects.push({x,y,z,s});
+}
+
+const geo=new THREE.BufferGeometry();
+geo.setAttribute(
+"position",
+new THREE.Float32BufferAttribute(positions,3)
+);
+geo.setAttribute(
+"color",
+new THREE.Float32BufferAttribute(colors,3)
+);
+
+const mat=new THREE.PointsMaterial({
+size:.65,
+vertexColors:true,
+sizeAttenuation:true
+});
+
+const points=new THREE.Points(geo,mat);
+group.add(points);
+
+let dragging=false,lastX=0,lastY=0;
+
+renderer.domElement.onpointerdown=e=>{
+dragging=true;
+lastX=e.clientX;
+lastY=e.clientY;
+};
+
+window.onpointerup=()=>dragging=false;
+
+window.onpointermove=e=>{
+if(!dragging)return;
+
+group.rotation.y+=(e.clientX-lastX)*.003;
+group.rotation.x+=(e.clientY-lastY)*.003;
+
+lastX=e.clientX;
+lastY=e.clientY;
+};
+
+renderer.domElement.onwheel=e=>{
+camera.position.z=Math.max(
+2,
+Math.min(1500,camera.position.z+e.deltaY*.08)
+);
+};
+
+function showStar(s){
+const info=document.getElementById("info");
+
+info.style.display="block";
+info.innerHTML=`
+<h2>${s.name}</h2>
+<p>${s.catalog}</p>
+<p>Distance<br><strong>${s.distance} light-years</strong></p>
+<p>Magnitude<br><strong>${s.magnitude}</strong></p>
+<p>Right Ascension<br><strong>${s.ra.toFixed(4)}°</strong></p>
+<p>Declination<br><strong>${s.dec.toFixed(4)}°</strong></p>
+`;
+}
+
+function render(list){
+document.getElementById("results").innerHTML=list.map((s,i)=>`
+<div class="result" data-i="${i}">
+<b>${s.name}</b>
+<small>${s.catalog} · ${s.distance} ly · mag ${s.magnitude}</small>
+</div>
+`).join("");
+
+document.querySelectorAll(".result").forEach(el=>{
+el.onclick=()=>showStar(list[Number(el.dataset.i)]);
+});
+}
+
+render(stars);
+
+document.getElementById("search").oninput=e=>{
+const q=e.target.value.toLowerCase();
+
+render(
+stars.filter(s=>
+s.name.toLowerCase().includes(q) ||
+s.catalog.toLowerCase().includes(q)
+)
+);
+};
+
+window.__ONSTAR_RENDERED__ = true;
+function animate(){
+requestAnimationFrame(animate);
+points.rotation.y+=.00008;
+renderer.render(scene,camera);
+}
+
+animate();
+
+window.onresize=()=>{
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
+};
+</script>
+</body>
+</html>

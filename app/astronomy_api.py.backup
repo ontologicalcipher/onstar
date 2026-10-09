@@ -1,0 +1,184 @@
+import csv
+import io
+import json
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
+
+from flask import Blueprint, jsonify, request
+
+astronomy = Blueprint("astronomy", __name__)
+
+GAIA = "https://gea.esac.esa.int/tap-server/tap/sync"
+SIMBAD = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync"
+EXOPLANETS = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
+JPL = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
+NASA_IMAGES = "https://images-api.nasa.gov/search"
+
+
+def get_url(url, params, timeout=25):
+    url += "?" + urlencode(params)
+    req = Request(
+        url,
+        headers={
+            "User-Agent": "ONSTAR/0.1 astronomy-explorer",
+            "Accept": "application/json, text/csv, */*",
+        },
+    )
+    with urlopen(req, timeout=timeout) as response:
+        return response.read().decode("utf-8")
+
+
+def csv_rows(text):
+    return list(csv.DictReader(io.StringIO(text)))
+
+
+def fetch_gaia(limit=100):
+    query = f"""
+        SELECT TOP {limit}
+        source_id, ra, dec, parallax, phot_g_mean_mag,
+        bp_rp, teff_gspphot
+        FROM gaiadr3.gaia_source
+        WHERE phot_g_mean_mag IS NOT NULL
+        AND ra IS NOT NULL AND dec IS NOT NULL
+        ORDER BY phot_g_mean_mag ASC
+    """
+    raw = get_url(GAIA, {
+        "REQUEST": "doQuery",
+        "LANG": "ADQL",
+        "FORMAT": "json",
+        "QUERY": " ".join(query.split()),
+    })
+    data = json.loads(raw)
+    fields = [x["name"] for x in data.get("metadata", [])]
+    return [
+        dict(zip(fields, row))
+        for row in data.get("data", [])
+    ]
+
+
+@astronomy.get("/api/astronomy/gaia")
+def gaia():
+    try:
+        limit = max(1, min(request.args.get("limit", 100, type=int), 1000))
+        return jsonify({"source": "ESA Gaia DR3", "items": fetch_gaia(limit)})
+    except Exception as exc:
+        return jsonify({"error": "Gaia query failed", "detail": str(exc)}), 502
+
+
+@astronomy.get("/api/astronomy/simbad")
+def simbad():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"error": "Supply ?q=Sirius"}), 400
+    # Escape SQL string literal characters.
+    q = q.replace("\\", "\\\\").replace("'", "''")[:100]
+    query = (
+        "SELECT TOP 20 main_id, ra, dec, otype, plx_value "
+        "FROM basic WHERE main_id LIKE '%" + q + "%'"
+    )
+    try:
+        raw = get_url(SIMBAD, {
+            "query": query,
+            "format": "csv",
+        })
+        return jsonify({"source": "SIMBAD", "items": csv_rows(raw)})
+    except Exception as exc:
+        return jsonify({"error": "SIMBAD lookup failed", "detail": str(exc)}), 502
+
+
+@astronomy.get("/api/astronomy/exoplanets")
+def exoplanets():
+    q = request.args.get("q", "").strip()
+    query = (
+        "SELECT TOP 100 pl_name, hostname, ra, dec, sy_dist, "
+        "discoverymethod FROM ps "
+        "WHERE ra IS NOT NULL AND dec IS NOT NULL"
+    )
+    if q:
+        q = q.replace("'", "''")[:100]
+        query += f" AND (pl_name LIKE '%{q}%' OR hostname LIKE '%{q}%')"
+    try:
+        raw = get_url(EXOPLANETS, {
+            "query": query,
+            "format": "json",
+        })
+        return jsonify({"source": "NASA Exoplanet Archive", "items": json.loads(raw)})
+    except Exception as exc:
+        return jsonify({"error": "Exoplanet query failed", "detail": str(exc)}), 502
+
+
+@astronomy.get("/api/astronomy/jpl")
+def jpl():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({
+            "source": "NASA JPL Small-Body Database",
+            "hint": "Supply ?q=Ceres or ?q=Apophis",
+        })
+    try:
+        raw = get_url("https://ssd-api.jpl.nasa.gov/sbdb.api", {
+            "sstr": q[:100],
+            "phys-par": "true",
+            "orbit": "true",
+        })
+        return jsonify({"source": "NASA JPL SBDB", "object": json.loads(raw)})
+    except Exception as exc:
+        return jsonify({"error": "JPL lookup failed", "detail": str(exc)}), 502
+
+
+@astronomy.get("/api/astronomy/images")
+def images():
+    q = request.args.get("q", "nebula").strip()[:100]
+    try:
+        raw = get_url(NASA_IMAGES, {
+            "q": q,
+            "media_type": "image",
+            "page_size": 20,
+        })
+        data = json.loads(raw)
+        items = []
+        for item in data.get("collection", {}).get("items", []):
+            meta = item.get("data", [{}])[0]
+            links = item.get("links", [])
+            items.append({
+                "title": meta.get("title"),
+                "description": meta.get("description"),
+                "date_created": meta.get("date_created"),
+                "nasa_id": meta.get("nasa_id"),
+                "url": links[0].get("href") if links else None,
+            })
+        return jsonify({"source": "NASA Image and Video Library", "items": items})
+    except Exception as exc:
+        return jsonify({"error": "NASA image search failed", "detail": str(exc)}), 502
+
+
+@astronomy.get("/api/astronomy/search")
+def search():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"error": "Supply ?q=Sirius"}), 400
+
+    # Keep this fast: object search uses SIMBAD; Gaia is queried separately.
+    try:
+        raw = get_url(SIMBAD, {
+            "query": (
+                "SELECT TOP 20 main_id, ra, dec, otype, plx_value "
+                "FROM basic WHERE main_id LIKE '%"
+                + q.replace("'", "''")[:100] + "%'"
+            ),
+            "format": "csv",
+        })
+        return jsonify({
+            "query": q,
+            "source": "SIMBAD",
+            "items": csv_rows(raw),
+            "other_endpoints": [
+                "/api/astronomy/gaia",
+                "/api/astronomy/exoplanets",
+                "/api/astronomy/jpl?q=Ceres",
+                "/api/astronomy/images?q=nebula",
+            ],
+        })
+    except Exception as exc:
+        return jsonify({"error": "Astronomy search failed", "detail": str(exc)}), 502

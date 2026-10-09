@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#050816">
+<title>ONSTAR — 3D Astronomy Explorer</title>
+<style>
+:root{color-scheme:dark;--panel:rgba(8,14,31,.88);--line:rgba(139,169,231,.2);--muted:#9ba9c8;--cyan:#79e7ff}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030611;color:#eef4ff;font-family:Inter,system-ui,-apple-system,sans-serif}
+#space{position:fixed;inset:0;touch-action:none}
+#space canvas{display:block;width:100%;height:100%;outline:none}
+header{position:fixed;z-index:4;top:0;left:0;right:0;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;pointer-events:none;background:linear-gradient(#030611b8,transparent)}
+.brand{font-size:19px;font-weight:850;letter-spacing:.34em}.brand span{color:var(--cyan)}
+.status{font-size:10px;letter-spacing:.13em;color:#9eafd3;text-align:right}
+.panel{position:fixed;z-index:5;background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 55px #0006;backdrop-filter:blur(18px);border-radius:16px}
+.search-panel{top:72px;left:16px;width:min(340px,calc(100vw - 32px));padding:12px}
+.search-row{display:flex;gap:8px}
+input,button,select{font:inherit;color:inherit}
+input{min-width:0;width:100%;padding:12px 13px;background:#101a30;border:1px solid #283858;border-radius:10px;outline:none}
+input:focus{border-color:#6bdcf5}
+button{border:1px solid #2b3b5d;background:#15223b;border-radius:9px;padding:9px 11px;cursor:pointer}
+button:active{transform:scale(.98)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.filters button{font-size:11px;color:#c5d3ef;padding:7px 9px}
+.filters button.active{background:#16445a;border-color:#4ecbe8;color:#e5fbff}
+.results{max-height:34vh;overflow:auto;margin-top:8px}
+.result{display:flex;justify-content:space-between;gap:8px;padding:10px;border-bottom:1px solid #ffffff0c;cursor:pointer;border-radius:8px}
+.result:hover,.result:focus{background:#1b2b48;outline:none}
+.result b{display:block;font-size:13px}.result small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.pill{font-size:9px;color:#8eeaff;white-space:nowrap;align-self:center}
+.info{display:none;right:16px;top:72px;width:min(310px,calc(100vw - 32px));padding:16px;max-height:calc(100vh - 130px);overflow:auto}
+.info-head{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.info h2{font-size:20px;line-height:1.2;margin:0 0 5px;overflow-wrap:anywhere}
+.sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{background:#ffffff08;border:1px solid #ffffff0b;border-radius:9px;padding:9px;min-width:0}
+.metric span{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.metric strong{font-size:12px;overflow-wrap:anywhere}
+.source-note{font-size:10px;color:var(--muted);line-height:1.5;margin-top:12px}
+.bottom{position:fixed;z-index:4;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center;padding:7px;background:#080e1fcf;border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(14px);max-width:calc(100vw - 20px)}
+.bottom button{font-size:11px;white-space:nowrap}.counter{font-size:10px;color:var(--muted);padding:0 7px;white-space:nowrap}
+.toast{position:fixed;z-index:8;left:50%;bottom:68px;transform:translateX(-50%);background:#121e35;border:1px solid #354b70;border-radius:10px;padding:10px 13px;font-size:12px;max-width:calc(100vw - 30px);display:none}
+.loading{display:inline-block;width:7px;height:7px;border-radius:50%;background:#74e6ff;margin-right:7px;box-shadow:0 0 12px #74e6ff}
+@media(max-width:600px){ #liveTrack{left:10px;bottom:58px;width:min(280px,calc(100vw - 20px));padding:9px}header{padding:14px 15px}.brand{font-size:16px}.status{font-size:8px;max-width:145px}.search-panel{top:62px;left:10px;padding:9px;width:min(290px,calc(100vw - 20px))}.results{max-height:28vh}.info{top:auto;bottom:64px;right:10px;width:min(280px,calc(100vw - 20px));max-height:44vh}.bottom{bottom:8px}.bottom button{padding:8px;font-size:10px}.counter{display:none}}
+</style>
+</head>
+<body>
+<div id="space" aria-label="Interactive 3D star field"></div>
+<header><div class="brand">ON<span>STAR</span></div><div class="status" id="status"><i class="loading"></i>LOADING LOCAL CATALOGUE</div></header>
+<section class="panel search-panel">
+  <div class="search-row"><input id="search" autocomplete="off" placeholder="Search Sirius, Gaia DR3, HIP…" aria-label="Search astronomical objects"><button id="clearSearch" title="Clear search">×</button></div>
+  <div class="filters"><button class="active" data-layer="all">All objects</button><button data-layer="local">Named stars</button><button data-layer="gaia">Gaia DR3</button><button data-layer="exo">Exoplanets</button></div>
+  <div id="results" class="results"></div>
+</section>
+<section class="panel" id="liveTrack" style="position:fixed;z-index:5;left:16px;bottom:72px;padding:12px;width:min(340px,calc(100vw - 32px));">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong style="font-size:12px">LIVE SOLAR SYSTEM</strong><span id="liveState" style="font-size:10px;color:#8eeaff">CONNECTING…</span></div>
+  <div style="display:flex;gap:6px;margin-top:8px"><select id="liveTarget" style="flex:1;min-width:0;background:#101a30;border:1px solid #283858;border-radius:8px;padding:8px"><option value="599">Jupiter</option><option value="499">Mars</option><option value="699">Saturn</option><option value="199">Mercury</option><option value="299">Venus</option><option value="799">Uranus</option><option value="899">Neptune</option><option value="301">Moon</option><option value="10">Sun</option></select><button id="refreshLive">Refresh now</button></div>
+  <div id="liveData" style="font-size:11px;line-height:1.6;color:#c5d3ef;margin-top:7px">Fetching current apparent coordinates…</div>
+  <div style="font-size:9px;color:#9ba9c8;margin-top:4px">JPL Horizons · auto-refreshes every 60 seconds · Earth-centred coordinates</div>
+</section>
+<aside id="info" class="panel info" aria-live="polite">
+  <div class="info-head"><div><h2 id="objName">Select an object</h2><div id="objSub" class="sub"></div></div><button id="closeInfo" aria-label="Close details">×</button></div>
+  <div class="grid" id="metrics"></div><div class="source-note" id="sourceNote"></div>
+</aside>
+<nav class="bottom"><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="resetView">Reset view</button><button id="loadGaia">Load Gaia</button><button id="onlineSearch">SIMBAD</button><button id="loadExoplanets">Exoplanets</button><button id="jplSearch">JPL</button><button id="nasaImages">NASA Images</button><span class="counter" id="counter">0 objects</span></nav>
+<div id="toast" class="toast"></div>
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+const $ = id => document.getElementById(id);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x030611);
+scene.fog = new THREE.FogExp2(0x030611, 0.00045);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
+camera.position.set(0,0,55);
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+$("space").appendChild(renderer.domElement);
+const world = new THREE.Group(); scene.add(world);
+const stars = [];
+const byId = new Map();
+let layer = "all", selected = null, isDragging=false, lastX=0,lastY=0, velocityX=0,velocityY=0, pinchStart=0, pinchZoom=55;
+let targetCamera = new THREE.Vector3(0,0,55), targetRotation = new THREE.Vector2(0,0);
+const raycaster = new THREE.Raycaster(); raycaster.params.Points.threshold=1.4;
+const pointer = new THREE.Vector2();
+const pointMeshes = [];
+const starTexture = (() => {
+  const c=document.createElement("canvas"); c.width=c.height=64;
+  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,31);
+  g.addColorStop(0,"rgba(255,255,255,1)"); g.addColorStop(.16,"rgba(190,235,255,.95)");
+  g.addColorStop(.42,"rgba(100,190,255,.32)"); g.addColorStop(1,"rgba(40,100,255,0)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
+  const t=new THREE.CanvasTexture(c); return t;
+})();
+function notify(msg){const el=$("toast");el.textContent=msg;el.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.style.display="none",3200);}
+function colorFor(s){
+  const ci=Number(s.color_index);
+  if(Number.isFinite(ci)){if(ci<0)return new THREE.Color(0x9ecbff);if(ci<.5)return new THREE.Color(0xc9e4ff);if(ci<1)return new THREE.Color(0xfff0d1);return new THREE.Color(0xffb08a);}
+  const m=Number(s.magnitude); if(m<0)return new THREE.Color(0xffd5a1);if(m<1)return new THREE.Color(0xc4ddff);return new THREE.Color(0xffe6c2);
+}
+function toVector(s){
+  const ra=Number(s.ra)*Math.PI/180, dec=Number(s.dec)*Math.PI/180;
+  let d=Number(s.distance_ly);
+  if(!Number.isFinite(d)||d<=0) d=1000;
+  // A logarithmic distance transform keeps nearby and distant catalogue stars visible together.
+  const r=5+Math.log10(1+d)*13;
+  return new THREE.Vector3(r*Math.cos(dec)*Math.cos(ra),r*Math.sin(dec),-r*Math.cos(dec)*Math.sin(ra));
+}
+function normalizeLocal(s){
+  const raDeg=Number(s.ra);
+  return {id:"local:"+s.catalog_id,name:s.proper_name||s.catalog_id,catalog_id:s.catalog_id,source:s.source_catalog||"Local catalogue",
+    ra:raDeg,dec:Number(s.dec),distance_ly:s.distance_ly==null?null:Number(s.distance_ly),
+    magnitude:s.apparent_mag==null?null:Number(s.apparent_mag),color_index:s.color_index==null?null:Number(s.color_index),
+    temperature_k:s.temperature==null?null:Number(s.temperature),spectral_type:s.spectral_type||null,kind:"local"};
+}
+function addStars(records, kind){
+  let count=0;
+  for(const raw of records){
+    const s={...raw,kind:raw.kind||kind};
+    s.id=String(s.id||s.catalog_id||s.name);
+    if(!Number.isFinite(Number(s.ra))||!Number.isFinite(Number(s.dec))||byId.has(s.id))continue;
+    s.position=toVector(s);
+    stars.push(s);byId.set(s.id,s);count++;
+  }
+  rebuildPoints();updateResults();$("counter").textContent=stars.length+" objects";
+  return count;
+}
+function rebuildPoints(){
+  for(const mesh of pointMeshes){world.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}
+  pointMeshes.length=0;
+  const visible=stars.filter(s=>layer==="all"||(layer==="local"&&s.kind==="local")||(layer==="gaia"&&s.kind==="gaia")||(layer==="exo"&&s.kind==="exo"));
+  // Batches use circular radial sprites; real catalogue points remain individually selectable by raycasting.
+  const positions=[],colors=[],sizes=[],refs=[];
+  for(const s of visible){positions.push(s.position.x,s.position.y,s.position.z);const c=colorFor(s);colors.push(c.r,c.g,c.b);sizes.push(s.kind==="local"?9:6);refs.push(s);}
+  if(!positions.length)return;
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+  geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
+  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:7,sizeAttenuation:false,transparent:true,alphaTest:.015,depthWrite:false});
+  const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
+}
+function showInfo(s){
+  selected=s;$("info").style.display="block";$("objName").textContent=s.name||s.id;$("objSub").textContent=s.catalog_id?`${s.source||"Catalogue"} · ${s.catalog_id}`:(s.source||"Astronomical object");
+  const metrics=[
+    ["Right ascension",fmt(s.ra,5,"°")],["Declination",fmt(s.dec,5,"°")],
+    ["Distance",s.distance_ly==null?"Not reliably available":fmt(s.distance_ly,2," ly")],
+    ["Apparent magnitude",fmt(s.magnitude,2,"")],["Parallax",fmt(s.parallax_mas,4," mas")],
+    ["Temperature",fmt(s.temperature_k,0," K")],["Colour index",fmt(s.color_index,3,"")],
+    ["Spectral type",s.spectral_type||"Not available"]
+  ];
+  $("metrics").innerHTML=metrics.map(([k,v])=>`<div class="metric"><span>${k}</span><strong>${v}</strong></div>`).join("");
+  $("sourceNote").textContent=`Source: ${s.source||"unknown"}. Missing measurements are shown as unavailable; Gaia distance is estimated only when parallax is positive.`;
+  targetCamera.copy(s.position.clone().add(new THREE.Vector3(0,0,Math.max(12,camera.position.z*.18))));
+}
+function fmt(v,d,suffix){return v==null||!Number.isFinite(Number(v))?"Unavailable":Number(v).toFixed(d)+suffix;}
+function updateResults(query=""){
+  const q=query.toLowerCase().trim();
+  const found=stars.filter(s=>(layer==="all"||(layer==="local"&&s.kind==="local")||(layer==="gaia"&&s.kind==="gaia")||(layer==="exo"&&s.kind==="exo"))&&(!q||[s.name,s.catalog_id,s.source,s.id].some(v=>String(v||"").toLowerCase().includes(q)))).slice(0,80);
+  $("results").innerHTML=found.map((s,i)=>`<div class="result" tabindex="0" data-id="${escapeAttr(s.id)}"><div><b>${escapeHtml(s.name||s.id)}</b><small>${escapeHtml(s.catalog_id||s.source||"Astronomical object")} · mag ${fmt(s.magnitude,2,"")}</small></div><span class="pill">${s.kind==="gaia"?"GAIA":s.kind==="exo"?"EXO":"STAR"}</span></div>`).join("")||'<div class="result"><small>No matching loaded objects. Try Load Gaia or another layer.</small></div>';
+  document.querySelectorAll(".result[data-id]").forEach(el=>{const act=()=>{const s=byId.get(el.dataset.id);if(s)showInfo(s)};el.onclick=act;el.onkeydown=e=>{if(e.key==="Enter")act()};});
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function escapeAttr(v){return escapeHtml(v);}
+async function loadLocal(){
+  try{const r=await fetch("/api/stars?per_page=200");if(!r.ok)throw Error("Local catalogue HTTP "+r.status);const data=await r.json();addStars((data.items||[]).map(normalizeLocal),"local");$("status").textContent=`LOCAL CATALOGUE · ${stars.length} OBJECTS`;}
+  catch(e){notify("Local catalogue failed to load: "+e.message);$("status").textContent="LOCAL CATALOGUE UNAVAILABLE";}
+}
+async function loadGaia(){
+  $("status").textContent="QUERYING ESA GAIA DR3…";$("loadGaia").disabled=true;
+  try{
+    // Cycle sky tiles on successive loads for broader coverage instead of returning one RA cluster.
+    const tile=Number(localStorage.getItem("onstar-gaia-tile")||0);
+    const r=await fetch(`/api/astronomy/gaia?limit=250&tile=${tile}`);
+    if(!r.ok){const err=await r.json().catch(()=>({}));throw Error(err.detail||"Gaia HTTP "+r.status);}
+    const data=await r.json();const added=addStars(data.items||[],"gaia");
+    localStorage.setItem("onstar-gaia-tile",String((tile+1)%72));
+    $("status").textContent=`GAIA DR3 + LOCAL · ${stars.length} OBJECTS`;
+    notify(`Gaia DR3: added ${added} records from sky tile ${tile+1}/72.`);
+    document.querySelectorAll("[data-layer]").forEach(b=>b.classList.toggle("active",b.dataset.layer==="gaia"));
+    layer="gaia";rebuildPoints();updateResults($("search").value);
+  }catch(e){$("status").textContent=`LOCAL DATA · ${stars.length} OBJECTS`;notify("Gaia unavailable: "+e.message);}
+  finally{$("loadGaia").disabled=false;}
+}
+async function loadExoplanets(){
+  $("status").textContent="QUERYING NASA EXOPLANET ARCHIVE…";
+  try{const r=await fetch("/api/astronomy/exoplanets");if(!r.ok)throw Error("NASA archive HTTP "+r.status);const data=await r.json();
+    const rows=Array.isArray(data.items)?data.items:(data.items?.data||[]);
+    const mapped=rows.map(p=>({id:"exo:"+p.pl_name,name:p.pl_name,catalog_id:p.hostname,source:"NASA Exoplanet Archive",ra:Number(p.ra),dec:Number(p.dec),distance_ly:p.sy_dist==null?null:Number(p.sy_dist)*3.26156,magnitude:null,kind:"exo",discovery_method:p.discoverymethod}));
+    const added=addStars(mapped,"exo");notify(`NASA Exoplanet Archive: added ${added} host/planet records with coordinates.`);$("status").textContent=`NASA EXOPLANETS · ${stars.length} OBJECTS`;
+  }catch(e){notify("Exoplanet data unavailable: "+e.message);$("status").textContent="LOCAL/GAIA DATA ACTIVE";}
+}
+async function searchSIMBAD(){
+  const q=$("search").value.trim();
+  if(!q){notify("Enter an object name or catalogue ID first.");return;}
+  $("status").textContent="SEARCHING SIMBAD…";
+  try{
+    const r=await fetch("/api/astronomy/simbad?q="+encodeURIComponent(q));
+    const data=await r.json();if(!r.ok)throw Error(data.detail||data.error||"SIMBAD request failed");
+    const mapped=(data.items||[]).filter(x=>x.ra!=null&&x.dec!=null).map(x=>{
+      const plx=Number(x.plx_value);
+      return {id:"simbad:"+x.main_id,name:x.main_id,catalog_id:x.main_id,source:"SIMBAD",ra:Number(x.ra),dec:Number(x.dec),
+        parallax_mas:Number.isFinite(plx)?plx:null,distance_ly:Number.isFinite(plx)&&plx>0?3261.56/plx:null,
+        magnitude:null,kind:"simbad",object_type:x.otype};
+    });
+    const added=addStars(mapped,"simbad");layer="all";document.querySelectorAll("[data-layer]").forEach(b=>b.classList.toggle("active",b.dataset.layer==="all"));
+    updateResults(q);$("status").textContent=`SIMBAD SEARCH · ${stars.length} OBJECTS`;notify(`SIMBAD returned ${data.items.length} records; added ${added} with coordinates.`);
+  }catch(e){notify("SIMBAD unavailable: "+e.message);$("status").textContent="LOCAL/GAIA DATA ACTIVE";}
+}
+async function searchJPL(){
+  const q=$("search").value.trim();
+  if(!q){notify("Type a Solar System object, e.g. Ceres, first.");return;}
+  try{
+    const r=await fetch("/api/astronomy/jpl?q="+encodeURIComponent(q));const data=await r.json();
+    if(!r.ok)throw Error(data.detail||data.error||"JPL request failed");
+    const o=data.object?.object||data.object||{};
+    $("info").style.display="block";$("objName").textContent=o.fullname||o.name||q;$("objSub").textContent="NASA JPL Small-Body Database";
+    const phys=o.phys_par||[];const orbit=o.orbit||{};
+    $("metrics").innerHTML=[
+      ["Designation",o.des||o.spkid||"Unavailable"],["Object type",o.object||o.kind||"Small body"],
+      ["Orbit solution",orbit.data_arc||"Unavailable"],["Orbital elements",orbit.elements?.length||"Available via JPL"]
+    ].map(([k,v])=>`<div class="metric"><span>${k}</span><strong>${escapeHtml(v)}</strong></div>`).join("");
+    $("sourceNote").textContent="Source: NASA JPL Small-Body Database. Orbital objects are not plotted as fixed stars; their positions depend on epoch and orbital elements.";
+    notify("JPL object details loaded.");
+  }catch(e){notify("JPL lookup unavailable: "+e.message);}
+}
+async function searchNASAImages(){
+  const q=$("search").value.trim()||"nebula";
+  try{
+    const r=await fetch("/api/astronomy/images?q="+encodeURIComponent(q));const data=await r.json();
+    if(!r.ok)throw Error(data.detail||data.error||"NASA Images request failed");
+    const item=(data.items||[]).find(x=>x.url);
+    if(!item){notify("No NASA images found for "+q);return;}
+    $("info").style.display="block";$("objName").textContent=item.title||q;$("objSub").textContent="NASA Image and Video Library";
+    $("metrics").innerHTML=`<div class="metric" style="grid-column:1/-1"><span>NASA ID</span><strong>${escapeHtml(item.nasa_id||"Unavailable")}</strong></div><div class="metric" style="grid-column:1/-1"><span>Date</span><strong>${escapeHtml(item.date_created||"Unavailable")}</strong></div>`;
+    $("sourceNote").innerHTML=`${escapeHtml(item.description||"No description provided.")}<br><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener" style="color:#79e7ff">Open NASA asset</a>`;
+    notify(`NASA Images returned ${data.items.length} results.`);
+  }catch(e){notify("NASA Images unavailable: "+e.message);}
+}
+function pointerDown(e){isDragging=true;lastX=e.clientX;lastY=e.clientY;velocityX=velocityY=0;renderer.domElement.setPointerCapture?.(e.pointerId);}
+function pointerMove(e){if(!isDragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;velocityX=dx*.002;velocityY=dy*.002;world.rotation.y+=velocityX;world.rotation.x=Math.max(-1.5,Math.min(1.5,world.rotation.x+velocityY));lastX=e.clientX;lastY=e.clientY;}
+function pointerUp(e){if(!isDragging)return;isDragging=false;if(Math.abs(velocityX)+Math.abs(velocityY)<.012){pointer.x=(e.clientX/innerWidth)*2-1;pointer.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pointMeshes);if(hits.length){const refs=hits[0].object.userData.refs;const s=refs[hits[0].index];if(s)showInfo(s);}}}
+renderer.domElement.addEventListener("pointerdown",pointerDown);
+renderer.domElement.addEventListener("pointermove",pointerMove);
+renderer.domElement.addEventListener("pointerup",pointerUp);
+renderer.domElement.addEventListener("pointercancel",()=>isDragging=false);
+renderer.domElement.addEventListener("wheel",e=>{e.preventDefault();targetCamera.z=Math.max(10,Math.min(500,targetCamera.z+e.deltaY*.045));},{passive:false});
+let touchDistance=null;
+renderer.domElement.addEventListener("touchmove",e=>{if(e.touches.length===2){e.preventDefault();const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const dist=Math.hypot(dx,dy);if(touchDistance!==null)targetCamera.z=Math.max(10,Math.min(500,targetCamera.z+(touchDistance-dist)*.12));touchDistance=dist;}},{passive:false});
+renderer.domElement.addEventListener("touchend",()=>touchDistance=null);
+$("search").addEventListener("input",e=>updateResults(e.target.value));
+$("clearSearch").onclick=()=>{$("search").value="";updateResults();};
+$("closeInfo").onclick=()=>$("info").style.display="none";
+$("zoomIn").onclick=()=>targetCamera.z=Math.max(10,targetCamera.z*.78);
+$("zoomOut").onclick=()=>targetCamera.z=Math.min(500,targetCamera.z*1.28);
+$("resetView").onclick=()=>{targetCamera.set(0,0,55);world.rotation.set(0,0,0);$("info").style.display="none";};
+$("loadGaia").onclick=loadGaia;
+$("onlineSearch").onclick=searchSIMBAD;
+$("loadExoplanets").onclick=loadExoplanets;
+$("jplSearch").onclick=searchJPL;
+$("nasaImages").onclick=searchNASAImages;
+document.querySelectorAll("[data-layer]").forEach(b=>b.onclick=()=>{if(b.dataset.layer==="exo"&&!stars.some(s=>s.kind==="exo"))loadExoplanets();layer=b.dataset.layer;document.querySelectorAll("[data-layer]").forEach(x=>x.classList.toggle("active",x===b));rebuildPoints();updateResults($("search").value);});
+async function refreshLiveEphemeris(){
+  const target=$("liveTarget").value;
+  $("liveState").textContent="UPDATING…";
+  try{
+    const response=await fetch(`/api/astronomy/ephemeris?target=${encodeURIComponent(target)}`,{cache:"no-store"});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.detail||data.error||`HTTP ${response.status}`);
+    $("liveState").textContent="LIVE · UPDATED";
+    $("liveData").innerHTML=`<b>${escapeHtml(data.target_name)}</b><br>Right ascension: ${escapeHtml(data.ra)}<br>Declination: ${escapeHtml(data.dec)}<br>Epoch: ${escapeHtml(new Date(data.epoch_utc).toLocaleTimeString())} UTC`;
+  }catch(error){$("liveState").textContent="OFFLINE";$("liveData").textContent="Live ephemeris unavailable: "+error.message+". The rest of ONSTAR remains usable.";}
+}
+$("refreshLive").onclick=refreshLiveEphemeris;
+$("liveTarget").onchange=refreshLiveEphemeris;
+refreshLiveEphemeris();
+const liveRefreshTimer=setInterval(refreshLiveEphemeris,60000);
+window.addEventListener("beforeunload",()=>clearInterval(liveRefreshTimer));
+
+async function animate(){
+  requestAnimationFrame(animate);
+  if(!isDragging){world.rotation.y+=velocityX;world.rotation.x=Math.max(-1.5,Math.min(1.5,world.rotation.x+velocityY));velocityX*=.94;velocityY*=.94;}
+  camera.position.lerp(targetCamera,.09);
+  renderer.render(scene,camera);
+}
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setSize(innerWidth,innerHeight);});
+await loadLocal();animate();
+// Do not call external services automatically; user can load catalogue layers on demand.
+</script>
+</body></html>

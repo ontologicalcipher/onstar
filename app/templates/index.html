@@ -43,6 +43,93 @@ button:active{transform:scale(.98)}
 .toast{position:fixed;z-index:8;left:50%;bottom:68px;transform:translateX(-50%);background:#121e35;border:1px solid #354b70;border-radius:10px;padding:10px 13px;font-size:12px;max-width:calc(100vw - 30px);display:none}
 .loading{display:inline-block;width:7px;height:7px;border-radius:50%;background:#74e6ff;margin-right:7px;box-shadow:0 0 12px #74e6ff}
 @media(max-width:600px){ #liveTrack{left:10px;bottom:58px;width:min(280px,calc(100vw - 20px));padding:9px}header{padding:14px 15px}.brand{font-size:16px}.status{font-size:8px;max-width:145px}.search-panel{top:62px;left:10px;padding:9px;width:min(290px,calc(100vw - 20px))}.results{max-height:28vh}.info{top:auto;bottom:64px;right:10px;width:min(280px,calc(100vw - 20px));max-height:44vh}.bottom{bottom:8px}.bottom button{padding:8px;font-size:10px}.counter{display:none}}
+
+/* ONSTAR LIGHT COSMIC THEME */
+:root {
+  color-scheme: light;
+  --panel: rgba(255,255,255,.94);
+  --line: #d8e2f0;
+  --muted: #64748b;
+  --cyan: #087eae;
+}
+
+html, body {
+  background: #f4f7fc;
+  color: #17233b;
+}
+
+header {
+  background: linear-gradient(#f4f7fc 35%, transparent);
+}
+
+.panel {
+  background: var(--panel);
+  color: #17233b;
+  border-color: var(--line);
+  box-shadow: 0 12px 35px rgba(35,55,90,.10);
+}
+
+input, select, textarea {
+  color: #17233b;
+  background: #f8faff;
+  border-color: #d5dfed;
+}
+
+input::placeholder {
+  color: #8190a6;
+}
+
+button {
+  color: #243650;
+  background: #edf3fc;
+  border-color: #d4dfef;
+}
+
+button:hover {
+  background: #e0ebfb;
+  border-color: #8eafe8;
+}
+
+.filters button.active {
+  background: #d9effa;
+  border-color: #62b9dc;
+  color: #075985;
+}
+
+.result:hover, .result:focus {
+  background: #eaf2ff;
+  outline: none;
+}
+
+.metric {
+  background: #f0f5fc;
+  border-color: #e0e8f4;
+}
+
+.bottom {
+  background: rgba(255,255,255,.96);
+  border-color: #d8e2f0;
+  box-shadow: 0 5px 24px rgba(35,55,90,.12);
+}
+
+.toast {
+  background: #ffffff;
+  color: #17233b;
+  border-color: #cbd8eb;
+  box-shadow: 0 5px 20px rgba(35,55,90,.12);
+}
+
+.loading {
+  background: #0891b2;
+  box-shadow: 0 0 10px rgba(8,145,178,.35);
+}
+
+#liveTarget {
+  color: #17233b !important;
+  background: #f8faff !important;
+  border-color: #d5dfed !important;
+}
+
 </style>
 </head>
 <body>
@@ -70,7 +157,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x030611);
+scene.background = new THREE.Color(0xf4f7fc);
 scene.fog = new THREE.FogExp2(0x030611, 0.00045);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
 camera.position.set(0,0,55);

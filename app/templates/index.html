@@ -178,20 +178,23 @@ const stars = [];
 const byId = new Map();
 let layer = "all", selected = null, isDragging=false, lastX=0,lastY=0, velocityX=0,velocityY=0, pinchStart=0, pinchZoom=55;
 let targetCamera = new THREE.Vector3(0,0,55), targetRotation = new THREE.Vector2(0,0);
-const raycaster = new THREE.Raycaster(); raycaster.params.Points.threshold=1.4;
+const raycaster = new THREE.Raycaster(); raycaster.params.Points.threshold=0.65;
 const pointer = new THREE.Vector2();
 const pointMeshes = [];
+let backgroundField = null;
 const starTexture = (() => {
-  const c=document.createElement("canvas"); c.width=c.height=64;
-  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,32);
+  const c=document.createElement("canvas");
+  c.width=c.height=64;
+  const ctx=c.getContext("2d");
+  const g=ctx.createRadialGradient(32,32,0,32,32,32);
   g.addColorStop(0,"rgba(255,255,255,1)");
-  g.addColorStop(.08,"rgba(255,255,255,1)");
-  g.addColorStop(.22,"rgba(180,235,255,1)");
-  g.addColorStop(.48,"rgba(70,180,255,.8)");
-  g.addColorStop(.75,"rgba(40,120,255,.3)");
-  g.addColorStop(1,"rgba(20,80,255,0)");
-  ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
-  const t=new THREE.CanvasTexture(c); return t;
+  g.addColorStop(.09,"rgba(255,255,255,1)");
+  g.addColorStop(.20,"rgba(225,242,255,.8)");
+  g.addColorStop(.42,"rgba(150,205,255,.22)");
+  g.addColorStop(1,"rgba(100,150,255,0)");
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
 })();
 function notify(msg){const el=$("toast");el.textContent=msg;el.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.style.display="none",3200);}
 function colorFor(s){
@@ -234,75 +237,92 @@ function rebuildPoints(){
   }
   pointMeshes.length=0;
 
-  const visible=stars.filter(s=>
+  // A distant procedural star field adds depth without inventing catalogue records.
+  if(!backgroundField){
+    const count=4500;
+    const positions=new Float32Array(count*3);
+    const colors=new Float32Array(count*3);
+
+    for(let i=0;i<count;i++){
+      const z=Math.random()*2-1;
+      const angle=Math.random()*Math.PI*2;
+      const radius=85+Math.random()*170;
+      const q=Math.sqrt(1-z*z);
+      positions[3*i]=radius*q*Math.cos(angle);
+      positions[3*i+1]=radius*z;
+      positions[3*i+2]=radius*q*Math.sin(angle);
+
+      const tint=Math.random();
+      const c=new THREE.Color(
+        tint<.12 ? 0xffd8b5 :
+        tint<.30 ? 0xbfdcff : 0xeaf2ff
+      );
+      const brightness=.35+Math.random()*.55;
+      colors[3*i]=c.r*brightness;
+      colors[3*i+1]=c.g*brightness;
+      colors[3*i+2]=c.b*brightness;
+    }
+
+    const bgGeometry=new THREE.BufferGeometry();
+    bgGeometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+    bgGeometry.setAttribute("color",new THREE.BufferAttribute(colors,3));
+    backgroundField=new THREE.Points(bgGeometry,new THREE.PointsMaterial({
+      size:.8,
+      map:starTexture,
+      transparent:true,
+      vertexColors:true,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false,
+      sizeAttenuation:true,
+      toneMapped:false
+    }));
+    backgroundField.frustumCulled=false;
+    world.add(backgroundField);
+  }
+
+  const visible=stars.filter(s =>
     layer==="all" ||
-    (layer==="local"&&s.kind==="local") ||
-    (layer==="gaia"&&s.kind==="gaia") ||
-    (layer==="exo"&&s.kind==="exo")
+    (layer==="local" && s.kind==="local") ||
+    (layer==="gaia" && s.kind==="gaia") ||
+    (layer==="exo" && s.kind==="exo")
   );
   if(!visible.length)return;
 
-  // Actual 3D spheres, not flat point sprites.
-  const sphereGeometry=new THREE.SphereGeometry(0.42,48,32);
-  const sphereMaterial=new THREE.MeshBasicMaterial({
-    color:0xffffff,
-    vertexColors:true,
-    toneMapped:false
-  });
-  const spheres=new THREE.InstancedMesh(
-    sphereGeometry,sphereMaterial,visible.length
-  );
-  const dummy=new THREE.Object3D();
-  const colors=[];
-  const refs=[];
-
+  const positions=new Float32Array(visible.length*3);
+  const colors=new Float32Array(visible.length*3);
   visible.forEach((s,i)=>{
-    // Large visible spheres, with a small brightness variation by star type.
-    const radius=s.kind==="local"?1.05:(s.kind==="exo"?0.8:0.72);
-    dummy.position.copy(s.position);
-    dummy.scale.setScalar(radius);
-    dummy.updateMatrix();
-    spheres.setMatrixAt(i,dummy.matrix);
+    positions[3*i]=s.position.x;
+    positions[3*i+1]=s.position.y;
+    positions[3*i+2]=s.position.z;
 
-    const c=colorFor(s).clone();
-    c.multiplyScalar(1.7);
-    spheres.setColorAt(i,c);
-    colors.push(c);
-    refs.push(s);
+    const c=colorFor(s);
+    const mag=Number(s.magnitude);
+    const brightness=Number.isFinite(mag)
+      ? THREE.MathUtils.clamp(1.5-mag*.12,.8,2.2) : 1;
+    colors[3*i]=c.r*brightness;
+    colors[3*i+1]=c.g*brightness;
+    colors[3*i+2]=c.b*brightness;
   });
 
-  spheres.instanceMatrix.needsUpdate=true;
-  if(spheres.instanceColor)spheres.instanceColor.needsUpdate=true;
-  spheres.userData.refs=refs;
-  world.add(spheres);
-  pointMeshes.push(spheres);
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+  geometry.setAttribute("color",new THREE.BufferAttribute(colors,3));
 
-  // Soft blue-white glow surrounding each 3D sphere.
-  const glowGeometry=new THREE.SphereGeometry(1,24,16);
-  const glowMaterial=new THREE.MeshBasicMaterial({
-    color:0x68caff,
+  const points=new THREE.Points(geometry,new THREE.PointsMaterial({
+    size:1.6,
+    map:starTexture,
     transparent:true,
-    opacity:0.10,
-    depthWrite:false,
+    vertexColors:true,
     blending:THREE.AdditiveBlending,
+    depthWrite:false,
+    sizeAttenuation:true,
     toneMapped:false
-  });
-  const glow=new THREE.InstancedMesh(
-    glowGeometry,glowMaterial,visible.length
-  );
+  }));
 
-  visible.forEach((s,i)=>{
-    const radius=s.kind==="local"?2.0:1.5;
-    dummy.position.copy(s.position);
-    dummy.scale.setScalar(radius);
-    dummy.updateMatrix();
-    glow.setMatrixAt(i,dummy.matrix);
-  });
-
-  glow.instanceMatrix.needsUpdate=true;
-  glow.userData.refs=refs;
-  world.add(glow);
-  pointMeshes.push(glow);
+  points.userData.refs=visible;
+  points.frustumCulled=false;
+  world.add(points);
+  pointMeshes.push(points);
 }
 function showInfo(s){
   selected=s;$("info").style.display="block";$("objName").textContent=s.name||s.id;$("objSub").textContent=s.catalog_id?`${s.source||"Catalogue"} · ${s.catalog_id}`:(s.source||"Astronomical object");

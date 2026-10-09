@@ -177,7 +177,7 @@ const pointMeshes = [];
 const starTexture = (() => {
   const c=document.createElement("canvas"); c.width=c.height=64;
   const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,31);
-  g.addColorStop(0,"rgba(255,255,255,1)"); g.addColorStop(.16,"rgba(190,235,255,.95)");
+  g.addColorStop(0,"rgba(20,45,85,1)"); g.addColorStop(.16,"rgba(30,75,145,1)");
   g.addColorStop(.42,"rgba(55,145,255,.62)"); g.addColorStop(.72,"rgba(35,105,230,.16)");
   g.addColorStop(1,"rgba(40,100,255,0)");
   ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
@@ -228,7 +228,7 @@ function rebuildPoints(){
   geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
   geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
   geometry.setAttribute("size",new THREE.Float32BufferAttribute(sizes,1));
-  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:9,sizeAttenuation:false,transparent:true,alphaTest:.008,depthWrite:false});
+  const material=new THREE.PointsMaterial({map:starTexture,vertexColors:true,size:10,sizeAttenuation:false,transparent:true,alphaTest:.008,depthWrite:false});
   const points=new THREE.Points(geometry,material);points.userData.refs=refs;world.add(points);pointMeshes.push(points);
 }
 function showInfo(s){

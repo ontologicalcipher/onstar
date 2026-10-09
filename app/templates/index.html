@@ -156,7 +156,80 @@ button:hover {
   #space { animation: none; }
 }
 
-</style>
+
+/* ONSTAR CELESTIAL OBSERVATORY THEME */
+:root {
+  --panel: rgba(255,255,255,.91);
+  --line: rgba(111,143,190,.35);
+  --muted: #526783;
+  --cyan: #087fa8;
+}
+
+#space {
+  background:
+    radial-gradient(ellipse at 18% 25%,
+      rgba(88,143,210,.42), transparent 38%),
+    radial-gradient(ellipse at 82% 38%,
+      rgba(155,126,207,.34), transparent 36%),
+    radial-gradient(ellipse at 52% 82%,
+      rgba(69,177,190,.25), transparent 40%),
+    linear-gradient(140deg,#b9cce5,#e1e8f5 48%,#d0d8ee);
+  background-size: 170% 170%;
+  animation: observatoryNebula 26s ease-in-out infinite alternate;
+}
+
+@keyframes observatoryNebula {
+  0% { background-position: 0% 20%; }
+  50% { background-position: 100% 60%; }
+  100% { background-position: 20% 100%; }
+}
+
+.panel {
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(255,255,255,.95);
+  box-shadow:
+    0 12px 36px rgba(48,69,111,.13),
+    inset 0 1px rgba(255,255,255,.95);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  color: #192b49;
+  text-shadow: 0 1px 0 white;
+}
+
+.brand span {
+  color: #087fa8;
+}
+
+.status, .counter {
+  color: #526783;
+}
+
+.filters button.active {
+  background: #d5edf7;
+  border-color: #62b6d4;
+  color: #075985;
+}
+
+.pill {
+  color: #087fa8;
+}
+
+.bottom {
+  background: rgba(255,255,255,.88);
+  border-color: rgba(130,153,192,.4);
+  box-shadow: 0 8px 28px rgba(48,69,111,.14);
+}
+
+#liveData {
+  color: #526783 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #space { animation: none; }
+}
+\n</style>
 </head>
 <body>
 <div id="space" aria-label="Interactive 3D star field"></div>

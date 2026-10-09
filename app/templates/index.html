@@ -201,13 +201,36 @@ const raycaster = new THREE.Raycaster(); raycaster.params.Points.threshold=1.4;
 const pointer = new THREE.Vector2();
 const pointMeshes = [];
 const starTexture = (() => {
-  const c=document.createElement("canvas"); c.width=c.height=64;
-  const ctx=c.getContext("2d"); const g=ctx.createRadialGradient(32,32,0,32,32,31);
-  g.addColorStop(0,"rgba(20,45,85,1)"); g.addColorStop(.16,"rgba(30,75,145,1)");
-  g.addColorStop(.42,"rgba(55,145,255,.62)"); g.addColorStop(.72,"rgba(35,105,230,.16)");
-  g.addColorStop(1,"rgba(40,100,255,0)");
-  ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
-  const t=new THREE.CanvasTexture(c); return t;
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const ctx = c.getContext("2d");
+
+  // Soft outer glow
+  const glow = ctx.createRadialGradient(32,32,1,32,32,31);
+  glow.addColorStop(0,"rgba(255,255,255,.95)");
+  glow.addColorStop(.18,"rgba(130,190,255,.75)");
+  glow.addColorStop(.48,"rgba(65,125,220,.28)");
+  glow.addColorStop(1,"rgba(40,100,255,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,64,64);
+
+  // Four-point astronomical sparkle
+  ctx.save();
+  ctx.translate(32,32);
+  ctx.beginPath();
+  ctx.moveTo(0,-25);
+  ctx.quadraticCurveTo(3,-4,25,0);
+  ctx.quadraticCurveTo(3,4,0,25);
+  ctx.quadraticCurveTo(-3,4,-25,0);
+  ctx.quadraticCurveTo(-3,-4,0,-25);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(255,255,255,1)";
+  ctx.shadowColor = "#4b91e8";
+  ctx.shadowBlur = 5;
+  ctx.fill();
+  ctx.restore();
+
+  return new THREE.CanvasTexture(c);
 })();
 function notify(msg){const el=$("toast");el.textContent=msg;el.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.style.display="none",3200);}
 function colorFor(s){
